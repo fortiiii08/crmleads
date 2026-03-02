@@ -1,0 +1,22 @@
+# build
+target/
+dist/
+build/
+
+# node
+node_modules/
+
+# env
+.env
+.env.local
+
+# logs
+*.log
+
+# ide
+.idea
+.vscode
+
+# system
+.DS_Store
+Thumbs.db

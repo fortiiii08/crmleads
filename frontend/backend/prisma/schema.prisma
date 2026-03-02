@@ -1,0 +1,231 @@
+// This is your Prisma schema file
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users     User[]
+  leads     Lead[]
+  pipelines Pipeline[]
+  scripts   Script[]
+  campaigns Campaign[]
+  tasks     Task[]
+}
+
+model User {
+  id           String   @id @default(uuid())
+  tenantId     String
+  name         String
+  email        String
+  passwordHash String
+  role         UserRole @default(AGENT)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  leads        Lead[]   @relation("AssignedLeads")
+  events       LeadEvent[]
+  tasks        Task[]   @relation("AssignedTasks")
+
+  @@unique([tenantId, email])
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  AGENT
+}
+
+model Pipeline {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String
+  area      String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  stages    Stage[]
+  leads     Lead[]
+}
+
+model Stage {
+  id         String   @id @default(uuid())
+  pipelineId String
+  name       String
+  color      String   @default("#6366f1")
+  order      Int
+  isLost     Boolean  @default(false)
+  isWon      Boolean  @default(false)
+  autoRules  Json?
+  createdAt  DateTime @default(now())
+
+  pipeline   Pipeline @relation(fields: [pipelineId], references: [id])
+  leads      Lead[]
+}
+
+model Campaign {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String
+  source    String   @default("linkedin")
+  budget    Float?
+  startDate DateTime?
+  endDate   DateTime?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  leads     Lead[]
+}
+
+model Lead {
+  id                   String      @id @default(uuid())
+  tenantId             String
+  pipelineId           String
+  stageId              String
+  assignedToId         String?
+  campaignId           String?
+
+  name                 String
+  email                String?
+  phone                String
+  bankWorked           String?
+  timeSinceDismissal   String?
+  source               String      @default("linkedin")
+  adName               String?
+  formName             String?
+  lgpdConsent          Boolean     @default(true)
+
+  slaStatus            SlaStatus   @default(OK)
+  firstContactAt       DateTime?
+  lastContactAt        DateTime?
+  
+  notes                String?
+  tags                 String[]    @default([])
+  
+  isActive             Boolean     @default(true)
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  tenant               Tenant      @relation(fields: [tenantId], references: [id])
+  pipeline             Pipeline    @relation(fields: [pipelineId], references: [id])
+  stage                Stage       @relation(fields: [stageId], references: [id])
+  assignedTo           User?       @relation("AssignedLeads", fields: [assignedToId], references: [id])
+  campaign             Campaign?   @relation(fields: [campaignId], references: [id])
+  events               LeadEvent[]
+  tasks                Task[]
+
+  @@unique([tenantId, phone])
+  @@index([tenantId, stageId])
+  @@index([tenantId, assignedToId])
+  @@index([tenantId, createdAt])
+}
+
+enum SlaStatus {
+  OK
+  WARNING
+  CRITICAL
+  OVERDUE
+}
+
+model LeadEvent {
+  id          String          @id @default(uuid())
+  leadId      String
+  userId      String?
+  type        LeadEventType
+  description String
+  metadata    Json?
+  createdAt   DateTime        @default(now())
+
+  lead        Lead            @relation(fields: [leadId], references: [id])
+  user        User?           @relation(fields: [userId], references: [id])
+}
+
+enum LeadEventType {
+  CREATED
+  STAGE_CHANGED
+  ASSIGNED
+  NOTE_ADDED
+  WHATSAPP_SENT
+  CALL_MADE
+  EMAIL_SENT
+  TASK_CREATED
+  TASK_COMPLETED
+  SLA_WARNING
+  SLA_OVERDUE
+  SCRIPT_USED
+}
+
+model Task {
+  id          String     @id @default(uuid())
+  tenantId    String
+  leadId      String
+  assignedToId String?
+  title       String
+  description String?
+  dueDate     DateTime?
+  completedAt DateTime?
+  priority    TaskPriority @default(MEDIUM)
+  status      TaskStatus   @default(PENDING)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  lead        Lead        @relation(fields: [leadId], references: [id])
+  assignedTo  User?       @relation("AssignedTasks", fields: [assignedToId], references: [id])
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model Script {
+  id          String       @id @default(uuid())
+  tenantId    String
+  title       String
+  content     String
+  category    ScriptCategory
+  area        String?
+  variables   String[]     @default([])
+  isActive    Boolean      @default(true)
+  usageCount  Int          @default(0)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [id])
+}
+
+enum ScriptCategory {
+  FIRST_CONTACT
+  QUALIFICATION
+  FOLLOW_UP
+  SCHEDULING
+  REACTIVATION
+  PROPOSAL
+  CLOSING
+}
