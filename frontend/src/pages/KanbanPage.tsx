@@ -4,13 +4,30 @@ import { useNavigate } from 'react-router-dom'
 import api from '../lib/api'
 import {
   DndContext, DragEndEvent, DragOverlay, DragStartEvent,
-  PointerSensor, useSensor, useSensors, closestCorners
+  PointerSensor, useSensor, useSensors, pointerWithin,
+  rectIntersection, getFirstCollision, useDroppable,
 } from '@dnd-kit/core'
+import type { CollisionDetection } from '@dnd-kit/core'
 import { SortableContext, useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Clock, MessageCircle, CheckSquare, User, Plus, ChevronDown } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+
+const BANK_CONFIG: Record<string, { file: string; from: string }> = {
+  bradesco:  { file: '/banks/bradesco.png',  from: 'rgba(204,0,0,0.08)' },
+  santander: { file: '/banks/santander.png', from: 'rgba(236,0,0,0.08)' },
+  itau:      { file: '/banks/itau.png',      from: 'rgba(255,130,0,0.10)' },
+}
+
+function getBankConfig(bankWorked?: string) {
+  if (!bankWorked) return null
+  const normalized = bankWorked.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  for (const [key, config] of Object.entries(BANK_CONFIG)) {
+    if (normalized.includes(key)) return config
+  }
+  return null
+}
 
 function getSlaColor(status: string) {
   if (status === 'WARNING') return 'border-l-yellow-400'
@@ -29,6 +46,7 @@ function getSlaText(status: string, createdAt: string) {
 function LeadCard({ lead, onClick }: { lead: any; onClick: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: lead.id })
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }
+  const bankConfig = getBankConfig(lead.bankWorked)
 
   return (
     <div
@@ -37,50 +55,73 @@ function LeadCard({ lead, onClick }: { lead: any; onClick: () => void }) {
       {...attributes}
       {...listeners}
       onClick={onClick}
-      className={`bg-white rounded-lg border border-gray-200 border-l-4 ${getSlaColor(lead.slaStatus)} p-3 cursor-pointer hover:shadow-md transition-shadow`}
+      className={`relative overflow-hidden rounded-lg border border-gray-200 border-l-4 ${getSlaColor(lead.slaStatus)} p-3 cursor-pointer hover:shadow-md transition-shadow`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-semibold text-gray-900 leading-tight">{lead.name}</p>
-        {lead.slaStatus !== 'OK' && (
-          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
-            lead.slaStatus === 'OVERDUE' ? 'bg-red-100 text-red-700' :
-            lead.slaStatus === 'CRITICAL' ? 'bg-orange-100 text-orange-700' :
-            'bg-yellow-100 text-yellow-700'
-          }`}>
-            {lead.slaStatus === 'OVERDUE' ? 'VENCIDO' : lead.slaStatus === 'CRITICAL' ? 'CRÍTICO' : 'ATENÇÃO'}
-          </span>
-        )}
-      </div>
-
-      {lead.bankWorked && (
-        <p className="text-xs text-gray-500 mt-1">{lead.bankWorked}</p>
+      {/* Bank background */}
+      {bankConfig && (
+        <div className="absolute inset-0 pointer-events-none">
+          <img
+            src={bankConfig.file}
+            alt=""
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-16 w-auto object-contain opacity-[0.12]"
+            onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+          />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(to right, white 45%, ${bankConfig.from} 100%)`
+            }}
+          />
+        </div>
       )}
 
-      <div className="flex items-center gap-3 mt-2.5">
-        {lead.assignedTo && (
-          <span className="flex items-center gap-1 text-xs text-gray-400">
-            <User className="w-3 h-3" />
-            {lead.assignedTo.name.split(' ')[0]}
-          </span>
-        )}
-        {lead._count?.tasks > 0 && (
-          <span className="flex items-center gap-1 text-xs text-gray-400">
-            <CheckSquare className="w-3 h-3" />
-            {lead._count.tasks}
-          </span>
-        )}
-        <span className="flex items-center gap-1 text-xs text-gray-400 ml-auto">
-          <Clock className="w-3 h-3" />
-          {formatDistanceToNow(new Date(lead.createdAt), { locale: ptBR, addSuffix: true })}
-        </span>
-      </div>
+      {/* Card content */}
+      <div className="relative z-10">
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-sm font-semibold text-gray-900 leading-tight">{lead.name}</p>
+          {lead.slaStatus !== 'OK' && (
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0 ${
+              lead.slaStatus === 'OVERDUE' ? 'bg-red-100 text-red-700' :
+              lead.slaStatus === 'CRITICAL' ? 'bg-orange-100 text-orange-700' :
+              'bg-yellow-100 text-yellow-700'
+            }`}>
+              {lead.slaStatus === 'OVERDUE' ? 'VENCIDO' : lead.slaStatus === 'CRITICAL' ? 'CRÍTICO' : 'ATENÇÃO'}
+            </span>
+          )}
+        </div>
 
-      {lead.slaStatus !== 'OK' && getSlaText(lead.slaStatus, lead.createdAt)}
+        {lead.bankWorked && (
+          <p className="text-xs text-gray-500 mt-1">{lead.bankWorked}</p>
+        )}
+
+        <div className="flex items-center gap-3 mt-2.5">
+          {lead.assignedTo && (
+            <span className="flex items-center gap-1 text-xs text-gray-400">
+              <User className="w-3 h-3" />
+              {lead.assignedTo.name.split(' ')[0]}
+            </span>
+          )}
+          {lead._count?.tasks > 0 && (
+            <span className="flex items-center gap-1 text-xs text-gray-400">
+              <CheckSquare className="w-3 h-3" />
+              {lead._count.tasks}
+            </span>
+          )}
+          <span className="flex items-center gap-1 text-xs text-gray-400 ml-auto">
+            <Clock className="w-3 h-3" />
+            {formatDistanceToNow(new Date(lead.createdAt), { locale: ptBR, addSuffix: true })}
+          </span>
+        </div>
+
+        {lead.slaStatus !== 'OK' && getSlaText(lead.slaStatus, lead.createdAt)}
+      </div>
     </div>
   )
 }
 
 function KanbanColumn({ stage, leads, onLeadClick }: { stage: any; leads: any[]; onLeadClick: (id: string) => void }) {
+  const { setNodeRef, isOver } = useDroppable({ id: stage.id })
+
   return (
     <div className="w-72 shrink-0 flex flex-col">
       <div className="flex items-center gap-2 px-1 mb-3">
@@ -91,7 +132,12 @@ function KanbanColumn({ stage, leads, onLeadClick }: { stage: any; leads: any[];
         </span>
       </div>
       <SortableContext items={leads.map(l => l.id)}>
-        <div className="kanban-col flex-1 overflow-y-auto space-y-2 pr-1 min-h-[100px]">
+        <div
+          ref={setNodeRef}
+          className={`kanban-col flex-1 overflow-y-auto space-y-2 pr-1 min-h-[100px] rounded-lg transition-colors ${
+            isOver ? 'bg-indigo-50 ring-2 ring-indigo-300 ring-inset' : ''
+          }`}
+        >
           {leads.map(lead => (
             <LeadCard key={lead.id} lead={lead} onClick={() => onLeadClick(lead.id)} />
           ))}
@@ -99,6 +145,18 @@ function KanbanColumn({ stage, leads, onLeadClick }: { stage: any; leads: any[];
       </SortableContext>
     </div>
   )
+}
+
+// Colisão: prioriza a coluna onde o ponteiro está; só usa cards como fallback
+function kanbanCollision(stageIds: string[]): CollisionDetection {
+  return (args) => {
+    // 1. O ponteiro está dentro de alguma coluna?
+    const columnHits = pointerWithin({ ...args, droppableContainers: args.droppableContainers.filter(c => stageIds.includes(String(c.id))) })
+    if (columnHits.length > 0) return columnHits
+
+    // 2. Fallback: interseção com qualquer elemento
+    return rectIntersection(args)
+  }
 }
 
 export default function KanbanPage() {
@@ -186,7 +244,7 @@ export default function KanbanPage() {
       </div>
 
       <div className="flex-1 overflow-x-auto p-6">
-        <DndContext sensors={sensors} collisionDetection={closestCorners} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <DndContext sensors={sensors} collisionDetection={kanbanCollision(kanban?.stages?.map((s: any) => s.id) ?? [])} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
           <div className="flex gap-4 h-full">
             {kanban?.stages?.map((stage: any) => (
               <KanbanColumn

@@ -8,6 +8,20 @@
   </head>
   <body>
     <div id="root"></div>
+    <!-- Roda ANTES de qualquer módulo ES: injeta token do Town no localStorage
+         para que o Zustand auth store leia o usuário correto na inicialização -->
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var crmToken = params.get('crm_token');
+        var crmUser = params.get('crm_user');
+        if (crmToken && crmUser) {
+          localStorage.setItem('crm_token', crmToken);
+          localStorage.setItem('crm_user', crmUser);
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

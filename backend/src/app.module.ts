@@ -11,12 +11,14 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { CampaignsModule } from './modules/campaigns/campaigns.module';
 import { SlaModule } from './modules/sla/sla.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
     ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
+    AdminModule,
     UsersModule,
     LeadsModule,
     PipelineModule,

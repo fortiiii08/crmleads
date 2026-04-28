@@ -12,8 +12,12 @@ export class ReportsController {
   constructor(private reportsService: ReportsService) {}
 
   @Get('dashboard')
-  getDashboard(@CurrentUser() user: any) {
-    return this.reportsService.getDashboard(user.tenantId);
+  getDashboard(
+    @CurrentUser() user: any,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.reportsService.getDashboard(user.tenantId, from, to);
   }
 
   @Get('campaigns')
@@ -22,12 +26,21 @@ export class ReportsController {
   }
 
   @Get('agents')
-  getByAgent(@CurrentUser() user: any) {
-    return this.reportsService.getLeadsByAgent(user.tenantId);
+  getByAgent(
+    @CurrentUser() user: any,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.reportsService.getLeadsByAgent(user.tenantId, from, to);
   }
 
   @Get('leads-by-day')
-  getByDay(@CurrentUser() user: any, @Query('days') days: number = 30) {
-    return this.reportsService.getLeadsByDay(user.tenantId, Number(days));
+  getByDay(
+    @CurrentUser() user: any,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+    @Query('days') days?: number,
+  ) {
+    return this.reportsService.getLeadsByDay(user.tenantId, from, to, days ? Number(days) : 14);
   }
 }

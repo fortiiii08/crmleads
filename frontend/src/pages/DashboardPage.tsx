@@ -1,7 +1,8 @@
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import api from '../lib/api'
-import { Users, TrendingUp, UserCheck, UserX, Clock, AlertTriangle } from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts'
+import { Users, TrendingUp, UserCheck, UserX, Clock, AlertTriangle, CalendarRange, X } from 'lucide-react'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 function StatCard({ label, value, icon: Icon, color, sub }: any) {
   return (
@@ -32,20 +33,119 @@ function SlaBar({ label, value, color }: { label: string; value: number; color: 
   )
 }
 
+const PRESETS = [
+  { label: 'Hoje', days: 0 },
+  { label: '7 dias', days: 7 },
+  { label: '14 dias', days: 14 },
+  { label: '30 dias', days: 30 },
+  { label: '90 dias', days: 90 },
+]
+
+function toLocalISO(d: Date) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function subtractDays(days: number) {
+  const d = new Date()
+  d.setDate(d.getDate() - days)
+  return toLocalISO(d)
+}
+
 export default function DashboardPage() {
-  const { data: dash } = useQuery({ queryKey: ['dashboard'], queryFn: () => api.get('/reports/dashboard').then(r => r.data) })
-  const { data: byDay = [] } = useQuery({ queryKey: ['leads-by-day'], queryFn: () => api.get('/reports/leads-by-day?days=14').then(r => r.data) })
-  const { data: agents = [] } = useQuery({ queryKey: ['agents-report'], queryFn: () => api.get('/reports/agents').then(r => r.data) })
+  const today = toLocalISO(new Date())
+  const [from, setFrom] = useState(subtractDays(30))
+  const [to, setTo] = useState(today)
+
+  const params = `from=${from}&to=${to}`
+
+  const { data: dash } = useQuery({
+    queryKey: ['dashboard', from, to],
+    queryFn: () => api.get(`/reports/dashboard?${params}`).then(r => r.data),
+  })
+  const { data: byDay = [] } = useQuery({
+    queryKey: ['leads-by-day', from, to],
+    queryFn: () => api.get(`/reports/leads-by-day?${params}`).then(r => r.data),
+  })
+  const { data: agents = [] } = useQuery({
+    queryKey: ['agents-report', from, to],
+    queryFn: () => api.get(`/reports/agents?${params}`).then(r => r.data),
+  })
+
+  function applyPreset(days: number) {
+    setFrom(days === 0 ? today : subtractDays(days))
+    setTo(today)
+  }
+
+  const isCustom = !PRESETS.some(p => {
+    const expectedFrom = p.days === 0 ? today : subtractDays(p.days)
+    return from === expectedFrom && to === today
+  })
+
+  const rangeLabel = isCustom
+    ? `${from} → ${to}`
+    : PRESETS.find(p => from === (p.days === 0 ? today : subtractDays(p.days)) && to === today)?.label
 
   return (
     <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500 text-sm mt-1">Visão geral do desempenho comercial</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-500 text-sm mt-1">Visão geral do desempenho comercial</p>
+        </div>
+
+        {/* Date range selector */}
+        <div className="card p-3 flex flex-wrap items-center gap-2">
+          <CalendarRange className="w-4 h-4 text-gray-400 shrink-0" />
+
+          {/* Presets */}
+          <div className="flex gap-1 flex-wrap">
+            {PRESETS.map(p => {
+              const active = from === (p.days === 0 ? today : subtractDays(p.days)) && to === today
+              return (
+                <button
+                  key={p.label}
+                  onClick={() => applyPreset(p.days)}
+                  className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                    active
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              )
+            })}
+          </div>
+
+          <div className="h-4 w-px bg-gray-200" />
+
+          {/* Custom dates */}
+          <div className="flex items-center gap-1">
+            <input
+              type="date"
+              value={from}
+              max={to}
+              onChange={e => setFrom(e.target.value)}
+              className="border border-gray-200 rounded px-2 py-1 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            />
+            <span className="text-gray-400 text-xs">→</span>
+            <input
+              type="date"
+              value={to}
+              min={from}
+              max={today}
+              onChange={e => setTo(e.target.value)}
+              className="border border-gray-200 rounded px-2 py-1 text-xs text-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+            />
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total de Leads" value={dash?.totalLeads} icon={Users} color="bg-indigo-500" sub={`+${dash?.leadsToday || 0} hoje`} />
+        <StatCard label="Total de Leads" value={dash?.totalLeads} icon={Users} color="bg-indigo-500" sub={`+${dash?.leadsToday || 0} no período`} />
         <StatCard label="Clientes Fechados" value={dash?.clientesFechados} icon={UserCheck} color="bg-green-500" sub={`${dash?.taxaFechamento}% conversão`} />
         <StatCard label="Leads Perdidos" value={dash?.leadsPeridos} icon={UserX} color="bg-red-500" />
         <StatCard label="Tempo Médio Contato" value={dash?.avgFirstContactMinutes != null ? `${dash.avgFirstContactMinutes}min` : '—'} icon={Clock} color="bg-blue-500" sub="primeiro contato" />
@@ -53,7 +153,10 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="card p-5 lg:col-span-2">
-          <h3 className="font-semibold text-gray-900 mb-4">Leads por Dia (14 dias)</h3>
+          <h3 className="font-semibold text-gray-900 mb-4">
+            Leads por Dia
+            <span className="ml-2 text-xs font-normal text-gray-400">{rangeLabel}</span>
+          </h3>
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={byDay}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -80,7 +183,10 @@ export default function DashboardPage() {
       </div>
 
       <div className="card p-5">
-        <h3 className="font-semibold text-gray-900 mb-4">Performance da Equipe</h3>
+        <h3 className="font-semibold text-gray-900 mb-4">
+          Performance da Equipe
+          <span className="ml-2 text-xs font-normal text-gray-400">{rangeLabel}</span>
+        </h3>
         {agents.length === 0 ? (
           <p className="text-gray-400 text-sm">Nenhum dado disponível</p>
         ) : (

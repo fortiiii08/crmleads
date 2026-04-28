@@ -5,9 +5,12 @@ import { PrismaService } from '../../common/prisma/prisma.service';
 export class ReportsService {
   constructor(private prisma: PrismaService) {}
 
-  async getDashboard(tenantId: string) {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+  async getDashboard(tenantId: string, from?: string, to?: string) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const today = new Date(todayStr + 'T00:00:00.000Z');
+
+    const dateFilter = this.buildDateFilter(from, to);
+    const hasDateFilter = !!dateFilter;
 
     const [
       totalLeads,
@@ -17,12 +20,12 @@ export class ReportsService {
       avgFirstContact,
       slaStats,
     ] = await Promise.all([
-      this.prisma.lead.count({ where: { tenantId, isActive: true } }),
-      this.prisma.lead.count({ where: { tenantId, createdAt: { gte: today } } }),
-      this.prisma.lead.count({ where: { tenantId, stage: { isWon: true } } }),
-      this.prisma.lead.count({ where: { tenantId, stage: { isLost: true } } }),
-      this.getAvgFirstContactTime(tenantId),
-      this.getSlaBreakdown(tenantId),
+      this.prisma.lead.count({ where: { tenantId, isActive: true, ...(hasDateFilter && { createdAt: dateFilter }) } }),
+      this.prisma.lead.count({ where: { tenantId, createdAt: hasDateFilter ? dateFilter : { gte: today } } }),
+      this.prisma.lead.count({ where: { tenantId, stage: { isWon: true }, ...(hasDateFilter && { createdAt: dateFilter }) } }),
+      this.prisma.lead.count({ where: { tenantId, stage: { isLost: true }, ...(hasDateFilter && { createdAt: dateFilter }) } }),
+      this.getAvgFirstContactTime(tenantId, dateFilter),
+      this.getSlaBreakdown(tenantId, dateFilter),
     ]);
 
     return {
@@ -58,11 +61,15 @@ export class ReportsService {
     }));
   }
 
-  async getLeadsByAgent(tenantId: string) {
+  async getLeadsByAgent(tenantId: string, from?: string, to?: string) {
+    const dateFilter = this.buildDateFilter(from, to);
+    const leadsWhere = dateFilter ? { createdAt: dateFilter } : {};
+
     const agents = await this.prisma.user.findMany({
       where: { tenantId, isActive: true },
       include: {
         leads: {
+          where: leadsWhere,
           include: { stage: true },
         },
       },
@@ -82,12 +89,28 @@ export class ReportsService {
     }));
   }
 
-  async getLeadsByDay(tenantId: string, days: number = 30) {
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
+  async getLeadsByDay(tenantId: string, from?: string, to?: string, days: number = 14) {
+    let startDate: Date;
+    let endDate: Date | undefined;
+
+    if (from) {
+      startDate = new Date(from);
+      startDate.setHours(0, 0, 0, 0);
+    } else {
+      startDate = new Date();
+      startDate.setDate(startDate.getDate() - days);
+    }
+
+    if (to) {
+      endDate = new Date(to);
+      endDate.setHours(23, 59, 59, 999);
+    }
+
+    const createdAt: any = { gte: startDate };
+    if (endDate) createdAt.lte = endDate;
 
     const leads = await this.prisma.lead.findMany({
-      where: { tenantId, createdAt: { gte: startDate } },
+      where: { tenantId, createdAt },
       select: { createdAt: true },
     });
 
@@ -102,9 +125,17 @@ export class ReportsService {
       .sort((a, b) => a.date.localeCompare(b.date));
   }
 
-  private async getAvgFirstContactTime(tenantId: string): Promise<number | null> {
+  private buildDateFilter(from?: string, to?: string): any {
+    if (!from && !to) return null;
+    const filter: any = {};
+    if (from) filter.gte = new Date(from + 'T00:00:00.000Z');
+    if (to)   filter.lte = new Date(to   + 'T23:59:59.999Z');
+    return filter;
+  }
+
+  private async getAvgFirstContactTime(tenantId: string, dateFilter?: any): Promise<number | null> {
     const leads = await this.prisma.lead.findMany({
-      where: { tenantId, firstContactAt: { not: null } },
+      where: { tenantId, firstContactAt: { not: null }, ...(dateFilter && { createdAt: dateFilter }) },
       select: { createdAt: true, firstContactAt: true },
       take: 100,
       orderBy: { createdAt: 'desc' },
@@ -120,12 +151,13 @@ export class ReportsService {
     return Math.round(avg);
   }
 
-  private async getSlaBreakdown(tenantId: string) {
+  private async getSlaBreakdown(tenantId: string, dateFilter?: any) {
+    const extra = dateFilter ? { createdAt: dateFilter } : {};
     const [ok, warning, critical, overdue] = await Promise.all([
-      this.prisma.lead.count({ where: { tenantId, slaStatus: 'OK', isActive: true, firstContactAt: null } }),
-      this.prisma.lead.count({ where: { tenantId, slaStatus: 'WARNING', isActive: true } }),
-      this.prisma.lead.count({ where: { tenantId, slaStatus: 'CRITICAL', isActive: true } }),
-      this.prisma.lead.count({ where: { tenantId, slaStatus: 'OVERDUE', isActive: true } }),
+      this.prisma.lead.count({ where: { tenantId, slaStatus: 'OK', isActive: true, firstContactAt: null, ...extra } }),
+      this.prisma.lead.count({ where: { tenantId, slaStatus: 'WARNING', isActive: true, ...extra } }),
+      this.prisma.lead.count({ where: { tenantId, slaStatus: 'CRITICAL', isActive: true, ...extra } }),
+      this.prisma.lead.count({ where: { tenantId, slaStatus: 'OVERDUE', isActive: true, ...extra } }),
     ]);
     return { ok, warning, critical, overdue };
   }

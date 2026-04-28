@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/auth.store'
 import LoginPage from './pages/LoginPage'
@@ -15,9 +16,31 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+// Recebe token do Town via postMessage e troca de cliente sem recarregar
+function AutoLoginListener() {
+  const { setAuth } = useAuthStore()
+
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type === 'CRM_AUTO_LOGIN' && event.data?.token && event.data?.user) {
+        localStorage.setItem('crm_token', event.data.token)
+        localStorage.setItem('crm_user', JSON.stringify(event.data.user))
+        // Força reinicialização do Zustand com o novo usuário
+        // Assets JS/CSS estão em cache → recarrega rápido
+        window.location.href = '/dashboard'
+      }
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [setAuth])
+
+  return null
+}
+
 export default function App() {
   return (
     <BrowserRouter>
+      <AutoLoginListener />
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
