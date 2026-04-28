@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: crmleads-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: crmleads-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PORT
+        value: 3000
+      - key: FRONTEND_URL
+        value: "*"
+      - key: ADMIN_API_KEY
+        value: town-crm-master-key-2026
+
+databases:
+  - name: crmleads-db
+    plan: free
+    databaseName: crmleads
