@@ -10,8 +10,9 @@ RUN npm install
 COPY . .
 
 RUN npx prisma generate
-RUN npm run build && ls dist/main.js
+RUN npm run build
+RUN echo "=== Conteudo de /app/dist ===" && ls -la /app/dist/ && echo "=== main.js ===" && ls /app/dist/main.js
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node /app/dist/main"]
