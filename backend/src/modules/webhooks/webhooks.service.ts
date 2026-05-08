@@ -6,6 +6,7 @@ export class WebhooksService {
   constructor(private prisma: PrismaService) {}
 
   async receiveLinkedIn(tenantSlug: string, payload: any) {
+    console.log('=== WEBHOOK PAYLOAD ===', JSON.stringify(payload, null, 2));
     const tenant = await this.prisma.tenant.findUnique({ where: { slug: tenantSlug } });
     if (!tenant) return { error: 'Tenant não encontrado' };
 
@@ -31,6 +32,8 @@ export class WebhooksService {
         phone,
         bankWorked: payload.banco || payload.bankWorked || '',
         timeSinceDismissal: payload.tempoDesligamento || payload.timeSinceDismissal || '',
+        pharmacyName: payload.farmacia || payload.pharmacyName || '',
+        jobTitle: payload.cargo || payload.jobTitle || '',
         source: 'linkedin',
         adName: payload.adName || payload.anuncio || '',
         formName: payload.formName || payload.formulario || '',

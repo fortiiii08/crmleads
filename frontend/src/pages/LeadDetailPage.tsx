@@ -309,6 +309,8 @@ export default function LeadDetailPage() {
             <InfoItem icon={Mail} label="E-mail" value={lead.email} />
             <InfoItem icon={Building2} label="Banco" value={lead.bankWorked} />
             <InfoItem icon={Clock} label="Desligamento" value={lead.timeSinceDismissal} />
+            <InfoItem icon={Building2} label="Farmácia" value={lead.pharmacyName} />
+            <InfoItem icon={Building2} label="Cargo" value={lead.jobTitle} />
             <InfoItem icon={Tag} label="Origem" value={lead.source} />
             <InfoItem icon={Tag} label="Campanha" value={lead.campaign?.name} />
             <InfoItem icon={Tag} label="Anúncio" value={lead.adName} />
