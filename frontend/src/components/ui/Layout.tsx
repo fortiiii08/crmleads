@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../../store/auth.store'
 import {
   LayoutDashboard, Kanban, Users, MessageSquare, BarChart2,
-  LogOut, Bell, ChevronRight
+  LogOut, FileDown, ChevronRight, Settings
 } from 'lucide-react'
+import PdfReportModal from '../PdfReportModal'
 
 const navItems = [
   { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -11,11 +13,13 @@ const navItems = [
   { to: '/leads', icon: Users, label: 'Leads' },
   { to: '/scripts', icon: MessageSquare, label: 'Scripts' },
   { to: '/reports', icon: BarChart2, label: 'Relatórios' },
+  { to: '/settings', icon: Settings, label: 'Configurações' },
 ]
 
 export default function Layout() {
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
+  const [showPdf, setShowPdf] = useState(false)
 
   const handleLogout = () => {
     logout()
@@ -72,9 +76,14 @@ export default function Layout() {
             <ChevronRight className="w-4 h-4" />
             <span className="font-medium text-gray-700">CRM Jurídico</span>
           </div>
-          <button className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg">
-            <Bell className="w-5 h-5" />
+          <button
+            onClick={() => setShowPdf(true)}
+            className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+          >
+            <FileDown className="w-4 h-4" />
+            Exportar PDF
           </button>
+          {showPdf && <PdfReportModal onClose={() => setShowPdf(false)} />}
         </header>
         <div className="flex-1 overflow-auto">
           <Outlet />

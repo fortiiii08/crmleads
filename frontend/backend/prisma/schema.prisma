@@ -106,6 +106,7 @@ model Lead {
   phone                String
   bankWorked           String?
   timeSinceDismissal   String?
+  airlineName          String?
   source               String      @default("linkedin")
   adName               String?
   formName             String?

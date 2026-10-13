@@ -35,7 +35,17 @@ export class AuthService {
   async me(userId: string) {
     return this.prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, name: true, email: true, role: true, tenantId: true, tenant: { select: { id: true, name: true, slug: true } } },
+      select: { id: true, name: true, email: true, role: true, tenantId: true, tenant: { select: { id: true, name: true, slug: true, niches: true } } },
     });
+  }
+
+  async updateTenantNiches(tenantId: string, niches: string[]) {
+    const tenant = await this.prisma.tenant.update({
+      where: { id: tenantId },
+      data: { niches },
+    });
+    // Fire-and-forget: trigger Town niche sync immediately
+    fetch('http://localhost:3001/api/cidade/crm/sync-niches', { method: 'POST' }).catch(() => {});
+    return { niches: tenant.niches };
   }
 }

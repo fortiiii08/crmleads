@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -28,5 +28,12 @@ export class AuthController {
   @ApiBearerAuth()
   me(@CurrentUser() user: any) {
     return this.authService.me(user.id);
+  }
+
+  @Patch('tenant/niches')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  updateNiches(@CurrentUser() user: any, @Body() body: { niches: string[] }) {
+    return this.authService.updateTenantNiches(user.tenantId, body.niches);
   }
 }

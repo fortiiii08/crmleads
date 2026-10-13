@@ -12,6 +12,7 @@ model Tenant {
   id        String     @id @default(uuid())
   name      String
   slug      String     @unique
+  niches    String[]   @default([])
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
   campaigns Campaign[]
@@ -92,10 +93,76 @@ model Lead {
   name               String
   email              String?
   phone              String
-  bankWorked         String?
-  timeSinceDismissal String?
-  pharmacyName       String?
-  jobTitle           String?
+  bankWorked              String?
+  timeSinceDismissal      String?
+  pharmacyName            String?
+  jobTitle                String?
+  market                  String?
+  airlineName             String?
+  empresa                 String?
+  linkedinUrl             String?
+  niche                   String?
+  servidorPublico         String?
+  consignadoAtivo         String?
+  situacaoEmprestimo      String?
+  aindaTrabalha           String?
+  profissaoMaisTempo      String?
+  estado                  String?
+  situacaoAtual           String?
+  tempoAcidente           String?
+  tipoAcidente            String?
+  melhorFormaContato      String?
+  melhorPeriodoContato    String?
+  empresaSabiaGravidez    String?
+  dataDemissao            String?
+  situacaoCaso            String?
+  quandoProblema          String?
+  situacaoAtualEmpresa    String?
+  afastamentoInss         String?
+  situacaoDemissao        String?
+  empresaConhecimento     String?
+  tempoRetornoDemissao    String?
+  catEmitida              String?
+  limitacaoSequela        String?
+  cidade                  String?
+  urgencia                String?
+  prontoContratar         String?
+  possuiDocumento         String?
+  operacao                String?
+  estagioOperacao         String?
+  possuiAtualmente        String?
+  paisOrigemDestino       String?
+  especieNomeCientifico   String?
+  orderId                 String?
+  produto                 String?
+  acaoAdvogado            String?
+  tempoArea               String?
+  quantasPessoas          String?
+  faseProcesso            String?
+  oquePossui              String?
+  prazoAndamento          String?
+  oabObjective            String?
+  oabNumber               String?
+  oabNotification         String?
+  oabSuspension           String?
+  faturamento             String?
+  marketing               String?
+  tipoFraude              String?
+  quandoPercebeuGolpe     String?
+  valorAproximado         String?
+  comoImovelAdquirido     String?
+  qualProblemaImovel      String?
+  quandoPercebeuProblema  String?
+  ondeComprouVeiculo      String?
+  situacaoVeiculo         String?
+  tempoComprouVeiculo     String?
+  tentouResolverLoja      String?
+  rotaVoo                 String?
+  principalProblema       String?
+  consequenciaProblema    String?
+  quemDesenvolver           String?
+  desafioComercial          String?
+  disponibilidadeAlphaville String?
   source             String      @default("linkedin")
   adName             String?
   formName           String?

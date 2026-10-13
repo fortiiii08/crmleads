@@ -15,7 +15,11 @@ const SLA_CONFIG = {
 
 function NewLeadModal({ onClose, onCreated }: { onClose: () => void; onCreated: () => void }) {
   const [form, setForm] = useState({
-    name: '', phone: '', email: '', bankWorked: '', timeSinceDismissal: '', adName: '', formName: '',
+    name: '', phone: '', email: '', bankWorked: '', timeSinceDismissal: '', adName: '', formName: '', airlineName: '', possuiDocumento: '',
+    situacaoDemissao: '', empresaConhecimento: '', tempoRetornoDemissao: '',
+    comoImovelAdquirido: '', qualProblemaImovel: '', quandoPercebeuProblema: '',
+    ondeComprouVeiculo: '', situacaoVeiculo: '', tempoComprouVeiculo: '', tentouResolverLoja: '',
+    rotaVoo: '', principalProblema: '', consequenciaProblema: '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -50,8 +54,23 @@ function NewLeadModal({ onClose, onCreated }: { onClose: () => void; onCreated: 
             {field('email', 'E-mail', 'email', 'joao@email.com')}
             {field('bankWorked', 'Banco onde trabalhou', 'text', 'Banco do Brasil')}
             {field('timeSinceDismissal', 'Tempo desde desligamento', 'text', 'Ex: 8 meses')}
+            {field('airlineName', 'Companhia Aérea', 'text', 'Ex: LATAM, Gol, Azul')}
             {field('adName', 'Nome do anúncio', 'text')}
             {field('formName', 'Formulário', 'text')}
+            <div className="col-span-2">{field('possuiDocumento', 'Possui documento ou prova relacionada à situação?', 'text', 'Ex: Sim, tenho contrato / Não possuo')}</div>
+            <div className="col-span-2">{field('situacaoDemissao', 'Em qual situação aconteceu a sua demissão?', 'text', 'Ex: Durante tratamento, após retorno...')}</div>
+            <div className="col-span-2">{field('empresaConhecimento', 'A empresa tinha conhecimento do tratamento ou afastamento?', 'text', 'Ex: Sim / Não')}</div>
+            <div className="col-span-2">{field('tempoRetornoDemissao', 'Quanto tempo depois do retorno aconteceu a demissão?', 'text', 'Ex: 2 semanas, 1 mês...')}</div>
+            <div className="col-span-2">{field('comoImovelAdquirido', 'Como o imóvel foi adquirido?', 'text', 'Ex: Financiamento, à vista, herança...')}</div>
+            <div className="col-span-2">{field('qualProblemaImovel', 'Qual problema você está enfrentando?', 'text', 'Ex: Vícios construtivos, cobrança indevida...')}</div>
+            <div className="col-span-2">{field('quandoPercebeuProblema', 'Quando você percebeu o problema?', 'text', 'Ex: Há 3 meses, em 2024...')}</div>
+            <div className="col-span-2">{field('rotaVoo', 'Origem / destino (voo)', 'text', 'Ex: São Paulo → Recife')}</div>
+            <div className="col-span-2">{field('principalProblema', 'Qual foi o principal problema?', 'text', 'Ex: Cancelamento, extravio de bagagem...')}</div>
+            <div className="col-span-2">{field('consequenciaProblema', 'Qual foi a principal consequência?', 'text', 'Ex: Perda de compromisso, prejuízo financeiro...')}</div>
+            <div className="col-span-2">{field('ondeComprouVeiculo', 'Onde você comprou o veículo?', 'text', 'Ex: Concessionária, loja multimarcas...')}</div>
+            <div className="col-span-2">{field('situacaoVeiculo', 'Qual situação aconteceu com o veículo?', 'text', 'Ex: Defeito oculto, acidente...')}</div>
+            <div className="col-span-2">{field('tempoComprouVeiculo', 'Há quanto tempo comprou o veículo?', 'text', 'Ex: 6 meses, 1 ano...')}</div>
+            <div className="col-span-2">{field('tentouResolverLoja', 'Já tentou resolver com a loja ou revendedora?', 'text', 'Ex: Sim, mas não resolveram / Não ainda')}</div>
           </div>
           {error && <p className="text-red-600 text-sm">{error}</p>}
           <div className="flex gap-3 pt-2">
@@ -145,7 +164,7 @@ export default function LeadsPage() {
             <tr>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Lead</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Contato</th>
-              <th className="text-left px-4 py-3 text-gray-500 font-medium">Banco</th>
+              <th className="text-left px-4 py-3 text-gray-500 font-medium">Empresa/Banco</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Etapa</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">SLA</th>
               <th className="text-left px-4 py-3 text-gray-500 font-medium">Entrada</th>
@@ -169,7 +188,7 @@ export default function LeadsPage() {
                     <p className="text-gray-700">{lead.phone}</p>
                     {lead.email && <p className="text-xs text-gray-400">{lead.email}</p>}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{lead.bankWorked || '—'}</td>
+                  <td className="px-4 py-3 text-gray-600">{(lead as any).bankWorked || (lead as any).pharmacyName || (lead as any).market || (lead as any).airlineName || '—'}</td>
                   <td className="px-4 py-3">
                     <span className="inline-flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full" style={{ backgroundColor: lead.stage?.color || '#999' }} />
@@ -210,7 +229,11 @@ export default function LeadsPage() {
       {showNew && (
         <NewLeadModal
           onClose={() => setShowNew(false)}
-          onCreated={() => queryClient.invalidateQueries({ queryKey: ['leads'] })}
+          onCreated={() => {
+            queryClient.invalidateQueries({ queryKey: ['leads'] })
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+            queryClient.invalidateQueries({ queryKey: ['leads-by-day'] })
+          }}
         />
       )}
     </div>

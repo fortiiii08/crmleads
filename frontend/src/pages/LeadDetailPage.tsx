@@ -307,10 +307,113 @@ export default function LeadDetailPage() {
             <h3 className="font-semibold text-gray-900">Informações</h3>
             <InfoItem icon={Phone} label="Telefone" value={lead.phone} />
             <InfoItem icon={Mail} label="E-mail" value={lead.email} />
+            <InfoItem icon={Building2} label="Empresa" value={(lead as any).empresa || (lead as any).company} />
+            <InfoItem icon={Building2} label="Cargo" value={(lead as any).cargo || lead.jobTitle} />
             <InfoItem icon={Building2} label="Banco" value={lead.bankWorked} />
             <InfoItem icon={Clock} label="Desligamento" value={lead.timeSinceDismissal} />
             <InfoItem icon={Building2} label="Farmácia" value={lead.pharmacyName} />
-            <InfoItem icon={Building2} label="Cargo" value={lead.jobTitle} />
+            <InfoItem icon={Tag} label="Mercado" value={lead.market} />
+            <InfoItem icon={Building2} label="Companhia Aérea" value={(lead as any).airlineName} />
+            <InfoItem icon={Tag} label="Nicho" value={(lead as any).niche} />
+            <InfoItem icon={Tag} label="Servidor(a) público?" value={(lead as any).servidorPublico} />
+            <InfoItem icon={Tag} label="Consignado ativo?" value={(lead as any).consignadoAtivo} />
+            <InfoItem icon={Tag} label="Situação no empréstimo" value={(lead as any).situacaoEmprestimo} />
+            <InfoItem icon={Tag} label="Ainda trabalha na empresa?" value={(lead as any).aindaTrabalha} />
+            <InfoItem icon={Tag} label="Profissão/área por mais tempo" value={(lead as any).profissaoMaisTempo} />
+            <InfoItem icon={Tag} label="Empresa" value={(lead as any).empresa} />
+            <InfoItem icon={Tag} label="Estado" value={(lead as any).estado} />
+            <InfoItem icon={Tag} label="Situação a analisar" value={(lead as any).situacaoAnalisar} />
+            <InfoItem icon={Tag} label="Situação atual" value={(lead as any).situacaoAtual} />
+            <InfoItem icon={Calendar} label="Vínculo terminou" value={(lead as any).vinculoTerminou} />
+            <InfoItem icon={Clock} label="Tempo na empresa" value={(lead as any).tempoTrabalho} />
+            <InfoItem icon={FileText} label="Tipo de contratação" value={(lead as any).tipoContratacao} />
+            <InfoItem icon={Tag} label="Possui documentos?" value={(lead as any).possuiDocumentos} />
+            <InfoItem icon={User} label="Acompanhado por advogado?" value={(lead as any).acompanhadoAdvogado} />
+            <InfoItem icon={Tag} label="Problema na viagem" value={(lead as any).problemaViagem} />
+            <InfoItem icon={Calendar} label="Quando o problema aconteceu" value={(lead as any).quandoProblema} />
+            <InfoItem icon={Tag} label="Tipo de voo" value={(lead as any).tipoVoo} />
+            <InfoItem icon={Clock} label="Atraso no destino" value={(lead as any).atrasoTempo} />
+            <InfoItem icon={Tag} label="Suporte da companhia aérea" value={(lead as any).suporteAerea} />
+            <InfoItem icon={Tag} label="Consequência do problema" value={(lead as any).consequenciaProblema} />
+            <InfoItem icon={FileText} label="Documentos do ocorrido" value={(lead as any).documentosAereo} />
+            <InfoItem icon={Tag} label="Acidente há mais de dois anos?" value={(lead as any).tempoAcidente} />
+            <InfoItem icon={Tag} label="Tipo de acidente" value={(lead as any).tipoAcidente} />
+            <InfoItem icon={Tag} label="Melhor forma de contato" value={(lead as any).melhorFormaContato} />
+            <InfoItem icon={Tag} label="Melhor período para contato" value={(lead as any).melhorPeriodoContato} />
+            <InfoItem icon={Tag} label="Empresa sabia da gravidez?" value={(lead as any).empresaSabiaGravidez} />
+            <InfoItem icon={Calendar} label="Data da demissão" value={(lead as any).dataDemissao} />
+            <InfoItem icon={Tag} label="Qual situação está relacionada ao seu caso?" value={(lead as any).situacaoCaso} />
+            <InfoItem icon={Calendar} label="Quando aconteceu ou começou o problema?" value={(lead as any).quandoProblema} />
+            <InfoItem icon={Tag} label="Qual é a sua situação atual na empresa?" value={(lead as any).situacaoAtualEmpresa} />
+            <InfoItem icon={Tag} label="Houve afastamento ou benefício pelo INSS?" value={(lead as any).afastamentoInss} />
+            <InfoItem icon={Tag} label="Em qual situação aconteceu a sua demissão?" value={(lead as any).situacaoDemissao} />
+            <InfoItem icon={Tag} label="A empresa tinha conhecimento do tratamento/afastamento?" value={(lead as any).empresaConhecimento} />
+            <InfoItem icon={Tag} label="Quanto tempo depois do retorno aconteceu a demissão?" value={(lead as any).tempoRetornoDemissao} />
+            <InfoItem icon={Tag} label="Foi emitida uma CAT?" value={(lead as any).catEmitida} />
+            <InfoItem icon={Tag} label="O problema deixou alguma limitação ou sequela?" value={(lead as any).limitacaoSequela} />
+            <InfoItem icon={Tag} label="Cidade" value={(lead as any).cidade} />
+            <InfoItem icon={Tag} label="Qual é a sua situação atual?" value={(lead as any).situacaoAtual} />
+            <InfoItem icon={Tag} label="Existe alguma urgência?" value={(lead as any).urgencia} />
+            <InfoItem icon={Tag} label="Pronto para contratar?" value={(lead as any).prontoContratar} />
+            <InfoItem icon={Tag} label="Possui documento ou prova?" value={(lead as any).possuiDocumento} />
+            <InfoItem icon={Tag} label="Já entrou com ação com advogado?" value={(lead as any).acaoAdvogado} />
+            <InfoItem icon={Tag} label="Há quanto tempo trabalha nessa área?" value={(lead as any).tempoNaArea} />
+            <InfoItem icon={Tag} label="Em qual fase está?" value={(lead as any).faseAtual} />
+            <InfoItem icon={Tag} label="Em qual fase está o processo?" value={(lead as any).faseProcesso} />
+            <InfoItem icon={Tag} label="O que você possui?" value={(lead as any).oQuePossui} />
+            <InfoItem icon={Tag} label="O que você possui? (novo)" value={(lead as any).oquePossui} />
+            <InfoItem icon={Tag} label="Existe prazo em andamento?" value={(lead as any).prazoAndamento} />
+            <InfoItem icon={Tag} label="Situação" value={(lead as any).situacao} />
+            <InfoItem icon={Tag} label="Quantas pessoas lidera/liderou?" value={(lead as any).quantasPessoas} />
+            {(lead as any).notes && (
+              <div>
+                <p className="text-xs text-gray-400">Mensagem / Observações</p>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">{(lead as any).notes}</p>
+              </div>
+            )}
+            {(lead as any).linkedinUrl && (
+              <div>
+                <p className="text-xs text-gray-400">LinkedIn</p>
+                <a href={(lead as any).linkedinUrl} target="_blank" rel="noreferrer" className="text-sm text-blue-600 hover:underline break-all">
+                  {(lead as any).linkedinUrl}
+                </a>
+              </div>
+            )}
+            <InfoItem icon={Tag} label="Order ID" value={(lead as any).orderId} />
+            <InfoItem icon={Tag} label="Produto" value={(lead as any).produto} />
+            <InfoItem icon={Tag} label="Ação do Advogado" value={(lead as any).acaoAdvogado} />
+            <InfoItem icon={Tag} label="Tempo na Área" value={(lead as any).tempoArea} />
+            <InfoItem icon={Tag} label="Quantas Pessoas" value={(lead as any).quantasPessoas} />
+            <InfoItem icon={Tag} label="Faturamento do escritório" value={(lead as any).faturamento} />
+            <InfoItem icon={Tag} label="Investe em marketing?" value={(lead as any).marketing} />
+            <InfoItem icon={Tag} label="Tipo de fraude" value={(lead as any).tipoFraude} />
+            <InfoItem icon={Tag} label="Quando percebeu o golpe?" value={(lead as any).quandoPercebeuGolpe} />
+            <InfoItem icon={Tag} label="Como o imóvel foi adquirido?" value={(lead as any).comoImovelAdquirido} />
+            <InfoItem icon={Tag} label="Qual problema você está enfrentando?" value={(lead as any).qualProblemaImovel} />
+            <InfoItem icon={Tag} label="Quando você percebeu o problema?" value={(lead as any).quandoPercebeuProblema} />
+            <InfoItem icon={Tag} label="Operação pretendida" value={(lead as any).operacao} />
+            <InfoItem icon={Tag} label="Estágio da operação" value={(lead as any).estagioOperacao} />
+            <InfoItem icon={Tag} label="O que já possui" value={(lead as any).possuiAtualmente} />
+            <InfoItem icon={Tag} label="País origem/destino" value={(lead as any).paisOrigemDestino} />
+            <InfoItem icon={Tag} label="Espécie / nome científico" value={(lead as any).especieNomeCientifico} />
+            <InfoItem icon={Tag} label="Rota do voo (origem / destino)" value={(lead as any).rotaVoo} />
+            <InfoItem icon={Tag} label="Qual foi o principal problema?" value={(lead as any).principalProblema} />
+            <InfoItem icon={Tag} label="Qual foi a principal consequência?" value={(lead as any).consequenciaProblema} />
+            <InfoItem icon={Tag} label="Onde você comprou o veículo?" value={(lead as any).ondeComprouVeiculo} />
+            <InfoItem icon={Tag} label="Qual situação aconteceu com o veículo?" value={(lead as any).situacaoVeiculo} />
+            <InfoItem icon={Tag} label="Há quanto tempo comprou o veículo?" value={(lead as any).tempoComprouVeiculo} />
+            <InfoItem icon={Tag} label="Tentou resolver com a loja/revendedora?" value={(lead as any).tentouResolverLoja} />
+            <InfoItem icon={Tag} label="Valor aproximado" value={(lead as any).valorAproximado} />
+            <InfoItem icon={Tag} label="Qual é a sua situação? (OAB)" value={(lead as any).oabNotification} />
+            <InfoItem icon={Tag} label="O que você pretende? (OAB)" value={(lead as any).oabObjective} />
+            <InfoItem icon={Tag} label="Número OAB" value={(lead as any).oabNumber} />
+            <InfoItem icon={Tag} label="Suspensão OAB" value={(lead as any).oabSuspension} />
+            <InfoItem icon={Tag} label="Quem deseja desenvolver no treinamento?" value={(lead as any).quemDesenvolver} />
+            <InfoItem icon={Tag} label="Principal desafio comercial do escritório" value={(lead as any).desafioComercial} />
+            <InfoItem icon={Tag} label="Disponibilidade Alphaville 16/11?" value={(lead as any).disponibilidadeAlphaville} />
+            <InfoItem icon={Tag} label="Órgão envolvido" value={(lead as any).orgaoEnvolvido} />
+            <InfoItem icon={Tag} label="Atividade principal" value={(lead as any).atividadePrincipal} />
+            <InfoItem icon={Tag} label="Razão social / nome fantasia" value={(lead as any).razaoSocial} />
             <InfoItem icon={Tag} label="Origem" value={lead.source} />
             <InfoItem icon={Tag} label="Campanha" value={lead.campaign?.name} />
             <InfoItem icon={Tag} label="Anúncio" value={lead.adName} />

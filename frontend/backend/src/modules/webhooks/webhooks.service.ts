@@ -31,6 +31,7 @@ export class WebhooksService {
         phone,
         bankWorked: payload.banco || payload.bankWorked || '',
         timeSinceDismissal: payload.tempoDesligamento || payload.timeSinceDismissal || '',
+        airlineName: payload.aerea || payload.companhiaAerea || payload.airlineName || '',
         source: 'linkedin',
         adName: payload.adName || payload.anuncio || '',
         formName: payload.formName || payload.formulario || '',

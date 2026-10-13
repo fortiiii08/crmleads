@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import api from '../lib/api'
 import { Users, TrendingUp, UserCheck, UserX, Clock, AlertTriangle, CalendarRange, X } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { useDateRangeStore } from '../store/dateRange.store'
 
 function StatCard({ label, value, icon: Icon, color, sub }: any) {
   return (
@@ -58,20 +59,26 @@ export default function DashboardPage() {
   const today = toLocalISO(new Date())
   const [from, setFrom] = useState(subtractDays(30))
   const [to, setTo] = useState(today)
+  const setRange = useDateRangeStore(s => s.setRange)
+
+  useEffect(() => { setRange(from, to) }, [from, to])
 
   const params = `from=${from}&to=${to}`
 
   const { data: dash } = useQuery({
     queryKey: ['dashboard', from, to],
     queryFn: () => api.get(`/reports/dashboard?${params}`).then(r => r.data),
+    refetchInterval: 30000,
   })
   const { data: byDay = [] } = useQuery({
     queryKey: ['leads-by-day', from, to],
     queryFn: () => api.get(`/reports/leads-by-day?${params}`).then(r => r.data),
+    refetchInterval: 30000,
   })
   const { data: agents = [] } = useQuery({
     queryKey: ['agents-report', from, to],
     queryFn: () => api.get(`/reports/agents?${params}`).then(r => r.data),
+    refetchInterval: 30000,
   })
 
   function applyPreset(days: number) {
@@ -158,12 +165,45 @@ export default function DashboardPage() {
             <span className="ml-2 text-xs font-normal text-gray-400">{rangeLabel}</span>
           </h3>
           <ResponsiveContainer width="100%" height={220}>
-            <LineChart data={byDay}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} tickFormatter={v => v.slice(5)} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(v: any) => [v, 'Leads']} labelFormatter={l => `Data: ${l}`} />
-              <Line type="monotone" dataKey="count" stroke="#6366f1" strokeWidth={2} dot={{ r: 3 }} />
+            <LineChart data={byDay} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 10, fill: '#9ca3af' }}
+                tickFormatter={v => {
+                  const [, m, d] = v.split('-')
+                  const months = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
+                  return `${parseInt(d)} ${months[parseInt(m) - 1]}`
+                }}
+                axisLine={false}
+                tickLine={false}
+                interval={Math.max(0, Math.ceil(byDay.length / 7) - 1)}
+              />
+              <YAxis
+                tick={{ fontSize: 10, fill: '#9ca3af' }}
+                axisLine={false}
+                tickLine={false}
+                allowDecimals={false}
+                domain={[0, 'auto']}
+              />
+              <Tooltip
+                contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,0.10)', fontSize: 12 }}
+                formatter={(v: any) => [v, 'Leads']}
+                labelFormatter={(l: string) => {
+                  const [, m, d] = l.split('-')
+                  const months = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
+                  return `${parseInt(d)} de ${months[parseInt(m) - 1]}`
+                }}
+                cursor={{ stroke: '#93c5fd', strokeWidth: 1, strokeDasharray: '4 4' }}
+              />
+              <Line
+                type="monotone"
+                dataKey="count"
+                stroke="#3b82f6"
+                strokeWidth={2}
+                dot={false}
+                activeDot={{ r: 4, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>

@@ -21,11 +21,13 @@ export default function ReportsPage() {
   const { data: byDay = [] } = useQuery({
     queryKey: ['leads-by-day-30'],
     queryFn: () => api.get('/reports/leads-by-day?days=30').then(r => r.data),
+    refetchInterval: 30000,
   })
 
   const { data: dash } = useQuery({
     queryKey: ['dashboard'],
     queryFn: () => api.get('/reports/dashboard').then(r => r.data),
+    refetchInterval: 30000,
   })
 
   const pieData = [
@@ -45,12 +47,44 @@ export default function ReportsPage() {
         <div className="card p-5">
           <h3 className="font-semibold text-gray-900 mb-4">Leads por Dia (30 dias)</h3>
           <ResponsiveContainer width="100%" height={240}>
-            <LineChart data={byDay}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="date" tick={{ fontSize: 10 }} tickFormatter={v => v.slice(5)} />
-              <YAxis tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(v: any) => [v, 'Leads']} labelFormatter={l => `Data: ${l}`} />
-              <Line type="monotone" dataKey="count" stroke="#6366f1" strokeWidth={2} dot={false} />
+            <LineChart data={byDay} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 10, fill: '#9ca3af' }}
+                tickFormatter={v => {
+                  const [, m, d] = v.split('-')
+                  const months = ['jan.','fev.','mar.','abr.','mai.','jun.','jul.','ago.','set.','out.','nov.','dez.']
+                  return `${parseInt(d)} de ${months[parseInt(m) - 1]}`
+                }}
+                axisLine={false}
+                tickLine={false}
+                interval={1}
+              />
+              <YAxis
+                tick={{ fontSize: 10, fill: '#9ca3af' }}
+                axisLine={false}
+                tickLine={false}
+                tickCount={6}
+              />
+              <Tooltip
+                contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 16px rgba(0,0,0,0.10)', fontSize: 12 }}
+                formatter={(v: any) => [v, 'Leads']}
+                labelFormatter={(l: string) => {
+                  const [, m, d] = l.split('-')
+                  const months = ['jan.','fev.','mar.','abr.','mai.','jun.','jul.','ago.','set.','out.','nov.','dez.']
+                  return `${parseInt(d)} de ${months[parseInt(m) - 1]}`
+                }}
+                cursor={{ stroke: '#93c5fd', strokeWidth: 1, strokeDasharray: '4 4' }}
+              />
+              <Line
+                type="linear"
+                dataKey="count"
+                stroke="#3b82f6"
+                strokeWidth={1.5}
+                dot={false}
+                activeDot={{ r: 4, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -180,7 +214,7 @@ export default function ReportsPage() {
           POST /api/webhooks/linkedin/<span className="text-indigo-600">{'{tenant-slug}'}</span>
         </div>
         <p className="text-xs text-gray-400 mt-2">
-          Substitua {'{tenant-slug}'} pelo slug do seu escritório. Campos aceitos: name, phone, email, banco, tempoDesligamento, adName, formName
+          Substitua {'{tenant-slug}'} pelo slug do seu escritório. Campos aceitos: name, phone, email, banco, tempoDesligamento, adName, formName, aerea (ou companhiaAerea)
         </p>
       </div>
     </div>

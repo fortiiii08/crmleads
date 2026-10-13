@@ -90,34 +90,39 @@ export class ReportsService {
   }
 
   async getLeadsByDay(tenantId: string, from?: string, to?: string, days: number = 14) {
-    let startDate: Date;
-    let endDate: Date | undefined;
+    const createdAt: any = {};
 
     if (from) {
-      startDate = new Date(from);
-      startDate.setHours(0, 0, 0, 0);
+      createdAt.gte = new Date(from + 'T00:00:00.000Z');
     } else {
-      startDate = new Date();
-      startDate.setDate(startDate.getDate() - days);
+      const d = new Date();
+      d.setUTCDate(d.getUTCDate() - days);
+      d.setUTCHours(0, 0, 0, 0);
+      createdAt.gte = d;
     }
 
     if (to) {
-      endDate = new Date(to);
-      endDate.setHours(23, 59, 59, 999);
+      createdAt.lte = new Date(to + 'T23:59:59.999Z');
     }
-
-    const createdAt: any = { gte: startDate };
-    if (endDate) createdAt.lte = endDate;
 
     const leads = await this.prisma.lead.findMany({
       where: { tenantId, createdAt },
       select: { createdAt: true },
     });
 
+    // Preenche todos os dias do intervalo com 0, e soma os leads
     const grouped: Record<string, number> = {};
+
+    // Monta série completa do from até to
+    const start = createdAt.gte as Date;
+    const end = createdAt.lte ?? new Date();
+    for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
+      grouped[d.toISOString().split('T')[0]] = 0;
+    }
+
     for (const lead of leads) {
       const day = lead.createdAt.toISOString().split('T')[0];
-      grouped[day] = (grouped[day] || 0) + 1;
+      if (day in grouped) grouped[day]++;
     }
 
     return Object.entries(grouped)
